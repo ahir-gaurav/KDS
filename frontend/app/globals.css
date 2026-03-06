@@ -1,0 +1,122 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Bebas+Neue&family=Anton&display=swap');
+@import url('https://api.fontshare.com/v2/css?f[]=clash-display@200,300,400,500,600,700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --olive: #2F3B2F;
+  --cream: #F4F1EA;
+  --burgundy: #6A1F2B;
+  --mustard: #D9A441;
+  --black: #111111;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--cream);
+  color: var(--black);
+  font-family: 'Inter', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--cream); }
+::-webkit-scrollbar-thumb { background: var(--olive); border-radius: 3px; }
+
+/* Selection */
+::selection { background: var(--mustard); color: var(--black); }
+
+/* Typography utilities */
+.font-clash { font-family: 'Clash Display', sans-serif; }
+.font-bebas { font-family: 'Bebas Neue', cursive; }
+.font-anton { font-family: 'Anton', sans-serif; }
+
+/* Marquee animation */
+@keyframes marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+.animate-marquee {
+  animation: marquee 30s linear infinite;
+  whitespace: nowrap;
+}
+
+/* Rotating sticker */
+@keyframes rotate-sticker {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.rotate-sticker {
+  animation: rotate-sticker 12s linear infinite;
+}
+
+/* Brutalist underline */
+.brutalist-underline {
+  position: relative;
+}
+.brutalist-underline::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background: var(--mustard);
+}
+
+/* Card hover lift */
+.card-hover {
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease;
+}
+.card-hover:hover {
+  transform: translateY(-8px) rotate(-0.5deg);
+  box-shadow: 8px 8px 0 var(--black);
+}
+
+/* Product tag styles */
+.tag-best-seller { background: var(--mustard); color: var(--black); }
+.tag-new-drop { background: var(--olive); color: var(--cream); }
+.tag-limited { background: var(--burgundy); color: var(--cream); }
+
+/* Brutalist button */
+.btn-brutalist {
+  border: 3px solid var(--black);
+  font-family: 'Bebas Neue', cursive;
+  letter-spacing: 0.1em;
+  transition: all 0.15s ease;
+  position: relative;
+}
+.btn-brutalist:hover {
+  transform: translate(-3px, -3px);
+  box-shadow: 6px 6px 0 var(--black);
+}
+.btn-brutalist:active {
+  transform: translate(0, 0);
+  box-shadow: none;
+}
+
+/* Loading skeleton */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.skeleton {
+  background: linear-gradient(90deg, #e0d9d0 25%, #f0e9e0 50%, #e0d9d0 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}

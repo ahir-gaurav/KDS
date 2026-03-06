@@ -1,0 +1,26 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+    --olive: #2F3B2F;
+    --cream: #F4F1EA;
+    --burgundy: #6A1F2B;
+    --mustard: #D9A441;
+}
+
+body {
+    background-color: var(--cream);
+    color: #111;
+    font-family: 'Inter', sans-serif;
+}
+
+@layer components {
+    .btn-admin {
+        @apply px-4 py-2 font-bold transition-all border-2 border-black hover:shadow-[4px_4px_0px_0px_#000] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none;
+    }
+}
+
+.skeleton {
+    @apply bg-black/5 animate-pulse rounded;
+}
