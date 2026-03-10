@@ -12,7 +12,7 @@ declare global { interface Window { Razorpay: any; } }
 
 const STEPS = ['Address', 'Review', 'Payment'];
 
-export default function CheckoutPage() {
+function CheckoutContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const couponCode = searchParams.get('coupon') || '';
@@ -281,5 +281,13 @@ export default function CheckoutPage() {
                 </div>
             </div>
         </div>
+    );
+}
+
+export default function CheckoutPage() {
+    return (
+        <React.Suspense fallback={<div className="min-h-screen bg-cream flex items-center justify-center font-bebas text-4xl">LOADING...</div>}>
+            <CheckoutContent />
+        </React.Suspense>
     );
 }

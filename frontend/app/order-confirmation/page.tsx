@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { orderAPI } from '@/lib/api';
 
-export default function OrderConfirmationPage() {
+function OrderConfirmationContent() {
     const searchParams = useSearchParams();
     const orderId = searchParams.get('id');
     const [order, setOrder] = useState<any>(null);
@@ -77,5 +77,13 @@ export default function OrderConfirmationPage() {
                 </div>
             </motion.div>
         </div>
+    );
+}
+
+export default function OrderConfirmationPage() {
+    return (
+        <React.Suspense fallback={<div className="min-h-screen bg-cream flex items-center justify-center font-bebas text-4xl">LOADING...</div>}>
+            <OrderConfirmationContent />
+        </React.Suspense>
     );
 }
