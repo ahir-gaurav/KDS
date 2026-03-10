@@ -10,7 +10,9 @@ import {
     Upload,
     LayoutGrid,
     List,
-    Info
+    Info,
+    Tag,
+    Percent,
 } from 'lucide-react';
 import { adminAPI } from '@/lib/api';
 import toast from 'react-hot-toast';
@@ -32,6 +34,30 @@ export default function AdminProducts() {
     const [files, setFiles] = useState<File[]>([]);
     const [tags, setTags] = useState<string[]>([]);
     const [newTag, setNewTag] = useState('');
+
+    // Offer & Pricing State
+    const [mrp, setMrp] = useState('');
+    const [discountPercent, setDiscountPercent] = useState('');
+    const [isOfferActive, setIsOfferActive] = useState(false);
+    const [offerLabel, setOfferLabel] = useState('');
+
+    // Offer edit modal
+    const [showOfferModal, setShowOfferModal] = useState(false);
+    const [offerProduct, setOfferProduct] = useState<any>(null);
+    const [offerMrp, setOfferMrp] = useState('');
+    const [offerDiscount, setOfferDiscount] = useState('');
+    const [offerActive, setOfferActive] = useState(false);
+    const [offerLabelEdit, setOfferLabelEdit] = useState('');
+    const [savingOffer, setSavingOffer] = useState(false);
+
+    // Computed selling price (live preview)
+    const computedSellingPrice = mrp && discountPercent
+        ? Math.round(parseFloat(mrp) - (parseFloat(mrp) * parseInt(discountPercent || '0') / 100))
+        : mrp ? parseFloat(mrp) : 0;
+
+    const computedOfferSellingPrice = offerMrp && offerDiscount
+        ? Math.round(parseFloat(offerMrp) - (parseFloat(offerMrp) * parseInt(offerDiscount || '0') / 100))
+        : offerMrp ? parseFloat(offerMrp) : 0;
 
     useEffect(() => {
         fetchProducts();
@@ -63,6 +89,12 @@ export default function AdminProducts() {
         tags.forEach(tag => formData.append('tags', tag));
         files.forEach(file => formData.append('images', file));
 
+        // Offer fields
+        if (mrp) formData.append('mrp', mrp);
+        if (discountPercent) formData.append('discountPercent', discountPercent);
+        formData.append('isOfferActive', String(isOfferActive));
+        if (offerLabel) formData.append('offerLabel', offerLabel);
+
         try {
             await adminAPI.createProduct(formData);
             toast.success('Product Created Successfully');
@@ -70,6 +102,7 @@ export default function AdminProducts() {
             fetchProducts();
             // Reset
             setName(''); setCategory(''); setPrice(''); setSalePrice(''); setDescription(''); setFiles([]); setTags([]);
+            setMrp(''); setDiscountPercent(''); setIsOfferActive(false); setOfferLabel('');
         } catch (err: any) {
             toast.error(err.response?.data?.message || 'Creation failed');
         } finally {
@@ -85,6 +118,39 @@ export default function AdminProducts() {
             setProducts(products.filter(p => p._id !== id));
         } catch {
             toast.error('Delete failed');
+        }
+    };
+
+    const openOfferModal = (product: any) => {
+        setOfferProduct(product);
+        setOfferMrp(product.mrp?.toString() || product.price?.toString() || '');
+        setOfferDiscount(product.discountPercent?.toString() || '0');
+        setOfferActive(product.isOfferActive || false);
+        setOfferLabelEdit(product.offerLabel || '');
+        setShowOfferModal(true);
+    };
+
+    const handleSaveOffer = async () => {
+        if (!offerProduct) return;
+        if (!offerMrp || parseFloat(offerMrp) <= 0) return toast.error('MRP is required');
+        const disc = parseInt(offerDiscount || '0');
+        if (disc < 0 || disc > 90) return toast.error('Discount must be 0–90%');
+
+        setSavingOffer(true);
+        try {
+            await adminAPI.updateProductOffer(offerProduct._id, {
+                mrp: parseFloat(offerMrp),
+                discountPercent: disc,
+                isOfferActive: offerActive,
+                offerLabel: offerLabelEdit || undefined,
+            });
+            toast.success('Offer updated!');
+            setShowOfferModal(false);
+            fetchProducts();
+        } catch (err: any) {
+            toast.error(err.response?.data?.message || 'Failed to update offer');
+        } finally {
+            setSavingOffer(false);
         }
     };
 
@@ -124,6 +190,16 @@ export default function AdminProducts() {
                                     {product.tags?.map((t: string) => (
                                         <span key={t} className="bg-black text-cream text-[8px] uppercase font-bold px-2 py-0.5 tracking-tighter self-start">{t}</span>
                                     ))}
+                                    {product.isOfferActive && product.discountPercent > 0 && (
+                                        <span className="bg-red-600 text-white text-[10px] uppercase font-bold px-2 py-0.5 tracking-tighter self-start">
+                                            -{product.discountPercent}%
+                                        </span>
+                                    )}
+                                    {product.isOfferActive && product.offerLabel && (
+                                        <span className="bg-mustard text-black text-[8px] uppercase font-bold px-2 py-0.5 tracking-tighter self-start">
+                                            {product.offerLabel}
+                                        </span>
+                                    )}
                                 </div>
                             </div>
 
@@ -134,13 +210,29 @@ export default function AdminProducts() {
                                         <h3 className="font-black text-sm uppercase leading-none truncate w-[140px]">{product.name}</h3>
                                     </div>
                                     <div className="text-right">
-                                        <p className="font-black text-lg text-mustard leading-none">₹{(product.salePrice || product.price || 0).toLocaleString()}</p>
-                                        {(product.salePrice && product.price) ? <p className="text-[10px] line-through text-black/30">₹{(product.price || 0).toLocaleString()}</p> : null}
+                                        {product.isOfferActive && product.discountPercent > 0 && product.sellingPrice ? (
+                                            <>
+                                                <p className="font-black text-lg text-mustard leading-none">₹{(product.sellingPrice || 0).toLocaleString()}</p>
+                                                <p className="text-[10px] line-through text-black/30">₹{(product.mrp || product.price || 0).toLocaleString()}</p>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <p className="font-black text-lg text-mustard leading-none">₹{(product.salePrice || product.price || 0).toLocaleString()}</p>
+                                                {(product.salePrice && product.price) ? <p className="text-[10px] line-through text-black/30">₹{(product.price || 0).toLocaleString()}</p> : null}
+                                            </>
+                                        )}
                                     </div>
                                 </div>
 
                                 <div className="flex gap-2 mt-4 pt-4 border-t border-black/10">
                                     <button className="flex-1 btn-admin bg-white text-black py-1 text-xs font-bold uppercase hover:bg-black hover:text-white">Edit</button>
+                                    <button
+                                        onClick={() => openOfferModal(product)}
+                                        className="p-2 border-2 border-black hover:bg-mustard hover:text-black transition-colors"
+                                        title="Manage Offer"
+                                    >
+                                        <Percent size={16} />
+                                    </button>
                                     <button
                                         onClick={() => handleDelete(product._id)}
                                         className="p-2 border-2 border-black hover:bg-burgundy hover:text-cream transition-colors"
@@ -154,7 +246,7 @@ export default function AdminProducts() {
                 </div>
             )}
 
-            {/* Add Modal */}
+            {/* Add Product Modal */}
             {showAddModal && (
                 <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-6 backdrop-blur-sm">
                     <motion.div
@@ -188,6 +280,45 @@ export default function AdminProducts() {
                                 <div>
                                     <label className="text-[10px] font-bold uppercase tracking-widest text-black/50 mb-2 block">Description</label>
                                     <textarea required value={description} onChange={e => setDescription(e.target.value)} className="w-full bg-transparent border-2 border-black p-3 outline-none font-bold h-32" />
+                                </div>
+
+                                {/* Offer & Pricing Section */}
+                                <div className="border-2 border-mustard p-4 bg-mustard/5">
+                                    <div className="flex items-center gap-2 mb-4">
+                                        <Tag size={16} className="text-mustard" />
+                                        <h3 className="font-black text-sm uppercase tracking-widest">Offer & Pricing</h3>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="text-[10px] font-bold uppercase tracking-widest text-black/50 mb-2 block">MRP (₹)</label>
+                                            <input type="number" min="0" value={mrp} onChange={e => setMrp(e.target.value)} className="w-full bg-transparent border-2 border-black p-3 outline-none font-bold" placeholder="e.g. 799" />
+                                        </div>
+                                        <div>
+                                            <label className="text-[10px] font-bold uppercase tracking-widest text-black/50 mb-2 block">Discount %</label>
+                                            <input type="number" min="0" max="90" value={discountPercent} onChange={e => setDiscountPercent(e.target.value)} className="w-full bg-transparent border-2 border-black p-3 outline-none font-bold" placeholder="e.g. 50" />
+                                        </div>
+                                    </div>
+                                    {mrp && (
+                                        <div className="mt-3 p-3 bg-black text-cream flex items-center justify-between">
+                                            <span className="text-[10px] font-bold uppercase tracking-widest">Selling Price</span>
+                                            <span className="font-black text-xl">₹{computedSellingPrice.toLocaleString()}</span>
+                                        </div>
+                                    )}
+                                    <div className="mt-3">
+                                        <label className="text-[10px] font-bold uppercase tracking-widest text-black/50 mb-2 block">Offer Label (Optional)</label>
+                                        <input value={offerLabel} onChange={e => setOfferLabel(e.target.value)} className="w-full bg-transparent border-2 border-black p-3 outline-none font-bold" placeholder="e.g. Flash Sale, Limited Time" />
+                                    </div>
+                                    <div className="mt-3 flex items-center gap-3">
+                                        <label className="text-[10px] font-bold uppercase tracking-widest text-black/50">Offer Active</label>
+                                        <button
+                                            type="button"
+                                            onClick={() => setIsOfferActive(!isOfferActive)}
+                                            className={`w-12 h-6 rounded-full transition-colors relative ${isOfferActive ? 'bg-green-500' : 'bg-black/20'}`}
+                                        >
+                                            <span className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${isOfferActive ? 'translate-x-6' : 'translate-x-0.5'}`} />
+                                        </button>
+                                        <span className="text-xs font-bold">{isOfferActive ? 'ON' : 'OFF'}</span>
+                                    </div>
                                 </div>
                             </div>
 
@@ -228,6 +359,74 @@ export default function AdminProducts() {
                                 </div>
                             </div>
                         </form>
+                    </motion.div>
+                </div>
+            )}
+
+            {/* Offer Edit Modal */}
+            {showOfferModal && offerProduct && (
+                <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-6 backdrop-blur-sm">
+                    <motion.div
+                        initial={{ scale: 0.9, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        className="w-full max-w-lg bg-cream border-4 border-mustard p-8 relative"
+                    >
+                        <button onClick={() => setShowOfferModal(false)} className="absolute top-4 right-4 p-2 hover:bg-black hover:text-white border-2 border-black"><X size={20} /></button>
+                        <div className="flex items-center gap-3 mb-6 border-b-4 border-black pb-4">
+                            <Percent size={24} className="text-mustard" />
+                            <h2 className="text-3xl font-black italic uppercase">Manage Offer</h2>
+                        </div>
+                        <p className="text-xs font-bold uppercase tracking-widest text-black/40 mb-6">{offerProduct.name}</p>
+
+                        <div className="space-y-4">
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="text-[10px] font-bold uppercase tracking-widest text-black/50 mb-2 block">MRP (₹)</label>
+                                    <input type="number" min="0" value={offerMrp} onChange={e => setOfferMrp(e.target.value)} className="w-full bg-transparent border-2 border-black p-3 outline-none font-bold" placeholder="e.g. 799" />
+                                </div>
+                                <div>
+                                    <label className="text-[10px] font-bold uppercase tracking-widest text-black/50 mb-2 block">Discount %</label>
+                                    <input type="number" min="0" max="90" value={offerDiscount} onChange={e => setOfferDiscount(e.target.value)} className="w-full bg-transparent border-2 border-black p-3 outline-none font-bold" placeholder="e.g. 50" />
+                                </div>
+                            </div>
+
+                            {offerMrp && (
+                                <div className="p-4 bg-black text-cream flex items-center justify-between">
+                                    <div>
+                                        <span className="text-[10px] font-bold uppercase tracking-widest text-cream/50">Selling Price</span>
+                                        {offerDiscount && parseInt(offerDiscount) > 0 && (
+                                            <p className="text-[10px] line-through text-cream/30 mt-1">MRP: ₹{parseFloat(offerMrp).toLocaleString()}</p>
+                                        )}
+                                    </div>
+                                    <span className="font-black text-2xl text-mustard">₹{computedOfferSellingPrice.toLocaleString()}</span>
+                                </div>
+                            )}
+
+                            <div>
+                                <label className="text-[10px] font-bold uppercase tracking-widest text-black/50 mb-2 block">Offer Label (Optional)</label>
+                                <input value={offerLabelEdit} onChange={e => setOfferLabelEdit(e.target.value)} className="w-full bg-transparent border-2 border-black p-3 outline-none font-bold" placeholder="e.g. Flash Sale, Limited Time" />
+                            </div>
+
+                            <div className="flex items-center gap-3">
+                                <label className="text-[10px] font-bold uppercase tracking-widest text-black/50">Offer Active</label>
+                                <button
+                                    type="button"
+                                    onClick={() => setOfferActive(!offerActive)}
+                                    className={`w-12 h-6 rounded-full transition-colors relative ${offerActive ? 'bg-green-500' : 'bg-black/20'}`}
+                                >
+                                    <span className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${offerActive ? 'translate-x-6' : 'translate-x-0.5'}`} />
+                                </button>
+                                <span className="text-xs font-bold">{offerActive ? 'ON' : 'OFF'}</span>
+                            </div>
+
+                            <button
+                                onClick={handleSaveOffer}
+                                disabled={savingOffer}
+                                className="w-full btn-admin bg-black text-cream py-4 font-black uppercase tracking-[0.2em] mt-4"
+                            >
+                                {savingOffer ? 'SAVING...' : 'SAVE OFFER →'}
+                            </button>
+                        </div>
                     </motion.div>
                 </div>
             )}

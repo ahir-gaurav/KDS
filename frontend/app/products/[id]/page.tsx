@@ -43,11 +43,12 @@ export default function ProductDetailPage() {
             toast.error('Please select a size');
             return;
         }
+        const hasActiveOffer = product.isOfferActive && product.discountPercent > 0 && product.sellingPrice;
         addItem({
             productId: product._id,
             name: product.name,
             image: product.images[0] || '',
-            price: product.salePrice || product.price,
+            price: hasActiveOffer ? product.sellingPrice : (product.salePrice || product.price),
             size: selectedSize,
             quantity,
         });
@@ -66,7 +67,8 @@ export default function ProductDetailPage() {
 
     if (!product) return null;
 
-    const displayPrice = product.salePrice || product.price;
+    const hasActiveOffer = product.isOfferActive && product.discountPercent > 0 && product.sellingPrice;
+    const displayPrice = hasActiveOffer ? product.sellingPrice : (product.salePrice || product.price);
 
     return (
         <div className="min-h-screen bg-cream">
@@ -132,6 +134,15 @@ export default function ProductDetailPage() {
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ duration: 0.5 }}
                     >
+                        {/* Offer Label Pill */}
+                        {hasActiveOffer && product.offerLabel && (
+                            <div className="mb-3">
+                                <span className="inline-block bg-mustard text-black text-sm font-bebas tracking-wider px-3 py-1 border border-black/20">
+                                    {product.offerLabel}
+                                </span>
+                            </div>
+                        )}
+
                         {/* Tags */}
                         {product.tags?.length > 0 && (
                             <div className="flex flex-wrap gap-2 mb-4">
@@ -145,16 +156,30 @@ export default function ProductDetailPage() {
                         <p className="font-inter text-black/50 text-sm uppercase tracking-widest mb-2">{product.category}</p>
                         <h1 className="font-clash font-bold text-3xl md:text-5xl leading-tight mb-4">{product.name}</h1>
 
-                        {/* Price */}
+                        {/* Price Section */}
                         <div className="flex items-center gap-4 mb-6 pb-6 border-b-2 border-black">
-                            <span className="font-bebas text-4xl text-mustard">₹{(displayPrice || 0).toLocaleString()}</span>
-                            {product.salePrice && product.price && (
-                                <span className="font-inter text-xl text-black/40 line-through">₹{product.price.toLocaleString()}</span>
+                            {hasActiveOffer ? (
+                                <>
+                                    <span className="bg-red-600 text-white text-lg font-bebas tracking-wider px-2 py-0.5 font-bold">
+                                        -{product.discountPercent}%
+                                    </span>
+                                    <span className="font-bebas text-4xl text-mustard">₹{(product.sellingPrice || 0).toLocaleString()}</span>
+                                </>
+                            ) : (
+                                <span className="font-bebas text-4xl text-mustard">₹{(displayPrice || 0).toLocaleString()}</span>
                             )}
-                            {product.salePrice && product.price && (
-                                <span className="bg-burgundy text-cream text-sm font-bebas tracking-wider px-2 py-0.5">
-                                    SAVE ₹{(product.price - product.salePrice).toLocaleString()}
-                                </span>
+                            {hasActiveOffer && (
+                                <div className="flex flex-col">
+                                    <span className="font-inter text-sm text-black/40 line-through">M.R.P.: ₹{(product.mrp || product.price || 0).toLocaleString()}</span>
+                                </div>
+                            )}
+                            {!hasActiveOffer && product.salePrice && product.price && (
+                                <>
+                                    <span className="font-inter text-xl text-black/40 line-through">₹{product.price.toLocaleString()}</span>
+                                    <span className="bg-burgundy text-cream text-sm font-bebas tracking-wider px-2 py-0.5">
+                                        SAVE ₹{(product.price - product.salePrice).toLocaleString()}
+                                    </span>
+                                </>
                             )}
                         </div>
 

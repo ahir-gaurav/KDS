@@ -14,6 +14,11 @@ interface Product {
     images: string[];
     tags?: string[];
     category: string;
+    mrp?: number;
+    sellingPrice?: number;
+    discountPercent?: number;
+    isOfferActive?: boolean;
+    offerLabel?: string;
 }
 
 interface ProductCardProps {
@@ -30,6 +35,8 @@ const tagStyles: Record<string, string> = {
 export default function ProductCard({ product, index = 0 }: ProductCardProps) {
     const { addItem } = useCart();
 
+    const hasActiveOffer = product.isOfferActive && product.discountPercent && product.discountPercent > 0 && product.sellingPrice;
+
     const handleAddToCart = (e: React.MouseEvent) => {
         e.preventDefault();
         e.stopPropagation();
@@ -37,13 +44,14 @@ export default function ProductCard({ product, index = 0 }: ProductCardProps) {
             productId: product._id,
             name: product.name,
             image: product?.images?.[0] || '',
-            price: product.salePrice || product.price,
+            price: hasActiveOffer ? product.sellingPrice! : (product.salePrice || product.price),
             size: '',
             quantity: 1,
         });
     };
 
-    const displayPrice = product.salePrice || product.price;
+    const displayPrice = hasActiveOffer ? product.sellingPrice! : (product.salePrice || product.price);
+    const originalPrice = hasActiveOffer ? (product.mrp || product.price) : (product.salePrice ? product.price : null);
 
     return (
         <motion.div
@@ -54,16 +62,31 @@ export default function ProductCard({ product, index = 0 }: ProductCardProps) {
         >
             <Link href={`/products/${product._id}`} className="block">
                 {/* Tags */}
-                {product.tags && product.tags.length > 0 && (
-                    <div className="absolute top-3 left-3 z-10 flex flex-col gap-1">
-                        {product.tags.slice(0, 2).map(tag => (
+                <div className="absolute top-3 left-3 z-10 flex flex-col gap-1">
+                    {/* Offer Label pill */}
+                    {hasActiveOffer && product.offerLabel && (
+                        <span className="text-xs font-bebas tracking-wider px-2 py-0.5 bg-mustard text-black border border-black/20">
+                            {product.offerLabel}
+                        </span>
+                    )}
+                    {product.tags && product.tags.length > 0 && (
+                        product.tags.slice(0, 2).map(tag => (
                             <span
                                 key={tag}
                                 className={`text-xs font-bebas tracking-wider px-2 py-0.5 ${tagStyles[tag] || 'bg-black text-white'}`}
                             >
                                 {tag}
                             </span>
-                        ))}
+                        ))
+                    )}
+                </div>
+
+                {/* Discount badge top-right */}
+                {hasActiveOffer && (
+                    <div className="absolute top-3 right-3 z-10">
+                        <span className="bg-red-600 text-white text-sm font-bebas tracking-wider px-2 py-1 font-bold">
+                            -{product.discountPercent}%
+                        </span>
                     </div>
                 )}
 
@@ -88,14 +111,21 @@ export default function ProductCard({ product, index = 0 }: ProductCardProps) {
                     <p className="text-xs font-inter text-black/50 mb-1 uppercase tracking-widest">{product.category}</p>
                     <h3 className="font-clash font-semibold text-base leading-tight mb-2 line-clamp-2">{product.name}</h3>
                     <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                            <span className="font-bebas text-2xl text-mustard tracking-wide">
-                                ₹{(displayPrice || 0).toLocaleString()}
-                            </span>
-                            {product.salePrice && product.price && (
-                                <span className="font-inter text-sm text-black/40 line-through">
-                                    ₹{product.price.toLocaleString()}
+                        <div>
+                            <div className="flex items-center gap-2">
+                                {hasActiveOffer && (
+                                    <span className="font-bebas text-sm text-red-600 font-bold">
+                                        -{product.discountPercent}%
+                                    </span>
+                                )}
+                                <span className="font-bebas text-2xl text-mustard tracking-wide">
+                                    ₹{(displayPrice || 0).toLocaleString()}
                                 </span>
+                            </div>
+                            {originalPrice && (
+                                <p className="font-inter text-xs text-black/40 line-through mt-0.5">
+                                    {hasActiveOffer ? 'M.R.P.: ' : ''}₹{originalPrice.toLocaleString()}
+                                </p>
                             )}
                         </div>
                     </div>

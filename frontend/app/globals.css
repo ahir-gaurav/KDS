@@ -52,7 +52,7 @@ body {
 
 .animate-marquee {
   animation: marquee 30s linear infinite;
-  whitespace: nowrap;
+  white-space: nowrap;
 }
 
 /* Rotating sticker */

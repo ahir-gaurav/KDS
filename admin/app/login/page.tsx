@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { adminAPI } from '@/lib/api';
 import { useAdminAuth } from '@/context/AdminAuthContext';
 import toast from 'react-hot-toast';
+import Link from 'next/link';
 
 export default function AdminLoginPage() {
     const [email, setEmail] = useState('');
@@ -83,6 +84,16 @@ export default function AdminLoginPage() {
                     </button>
                 </form>
 
+                {/* Register Link */}
+                <div className="mt-6 text-center">
+                    <p className="text-xs text-black/50">
+                        Don&apos;t have an account?{' '}
+                        <Link href="/register" className="text-black font-bold uppercase tracking-widest hover:text-mustard transition-colors underline underline-offset-4">
+                            Register
+                        </Link>
+                    </p>
+                </div>
+
                 <div className="mt-8 pt-6 border-t border-black/10 flex items-center justify-between opacity-30">
                     <div className="flex gap-1">
                         <div className="w-1 h-3 bg-black" />
@@ -95,3 +106,4 @@ export default function AdminLoginPage() {
         </div>
     );
 }
+

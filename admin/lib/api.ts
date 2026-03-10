@@ -31,6 +31,7 @@ api.interceptors.response.use(
 
 export const adminAPI = {
     login: (data: any) => api.post('/api/admin/login', data),
+    register: (data: any) => api.post('/api/admin/auth/signup', data),
     getStats: () => api.get('/api/admin/stats'),
 
     // Products
@@ -39,6 +40,7 @@ export const adminAPI = {
     updateProduct: (id: string, data: any) => api.put(`/api/admin/products/${id}`, data),
     deleteProduct: (id: string) => api.delete(`/api/admin/products/${id}`),
     addVariant: (id: string, data: any) => api.post(`/api/admin/products/${id}/variants`, data),
+    updateProductOffer: (id: string, data: any) => api.patch(`/api/admin/products/${id}/offer`, data),
 
     // Orders
     getOrders: (params?: any) => api.get('/api/admin/orders', { params }),
