@@ -30,7 +30,7 @@ api.interceptors.response.use(
 );
 
 export const adminAPI = {
-    login: (data: any) => api.post('/api/admin/login', data),
+    login: (data: any) => api.post('/api/admin/auth/login', data),
     register: (data: any) => api.post('/api/admin/auth/signup', data),
     getStats: () => api.get('/api/admin/stats'),
 

@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import './globals.css';
+import { ClerkProvider } from "@clerk/nextjs";
 import { AuthProvider } from '@/context/AuthContext';
 import { CartProvider } from '@/context/CartContext';
 import Header from '@/components/Header';
@@ -21,19 +22,21 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 <link rel="preconnect" href="https://api.fontshare.com" />
             </head>
             <body>
-                <AuthProvider>
-                    <CartProvider>
-                        <Toaster
-                            position="bottom-right"
-                            toastOptions={{
-                                style: { background: '#111', color: '#F4F1EA', border: '2px solid #D9A441' },
-                            }}
-                        />
-                        <Header />
-                        <main className="min-h-screen">{children}</main>
-                        <Footer />
-                    </CartProvider>
-                </AuthProvider>
+                <ClerkProvider>
+                    <AuthProvider>
+                        <CartProvider>
+                            <Toaster
+                                position="bottom-right"
+                                toastOptions={{
+                                    style: { background: '#111', color: '#F4F1EA', border: '2px solid #D9A441' },
+                                }}
+                            />
+                            <Header />
+                            <main className="min-h-screen">{children}</main>
+                            <Footer />
+                        </CartProvider>
+                    </AuthProvider>
+                </ClerkProvider>
             </body>
         </html>
     );

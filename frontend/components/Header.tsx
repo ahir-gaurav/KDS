@@ -4,20 +4,14 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ShoppingCart, User, Menu, X } from 'lucide-react';
+import { Show, SignInButton, SignUpButton, UserButton } from "@clerk/nextjs";
 import { useAuth } from '@/context/AuthContext';
 import { useCart } from '@/context/CartContext';
 
 export default function Header() {
     const [menuOpen, setMenuOpen] = useState(false);
-    const { user, logout } = useAuth();
     const { totalItems } = useCart();
     const router = useRouter();
-
-    const handleLogout = async () => {
-        await logout();
-        setMenuOpen(false);
-        router.push('/');
-    };
 
     return (
         <>
@@ -47,9 +41,23 @@ export default function Header() {
 
                     {/* Right: Profile + Cart */}
                     <div className="flex items-center gap-4">
-                        <Link href={user ? "/profile" : "/auth/login"} aria-label="Profile">
-                            <User size={24} strokeWidth={2} className="hover:text-mustard transition-colors" />
-                        </Link>
+                        <Show when="signed-in">
+                            <UserButton 
+                                appearance={{
+                                    elements: {
+                                        userButtonAvatarBox: "w-6 h-6 hover:opacity-80 transition-opacity",
+                                        userButtonTrigger: "focus:shadow-none focus:outline-none"
+                                    }
+                                }}
+                            />
+                        </Show>
+                        <Show when="signed-out">
+                            <SignInButton mode="modal">
+                                <button aria-label="Profile">
+                                    <User size={24} strokeWidth={2} className="hover:text-mustard transition-colors" />
+                                </button>
+                            </SignInButton>
+                        </Show>
                         <Link href="/cart" className="relative" aria-label="Cart">
                             <ShoppingCart size={24} strokeWidth={2} className="hover:text-mustard transition-colors" />
                             {totalItems > 0 && (
@@ -95,43 +103,56 @@ export default function Header() {
                             <div className="mt-12">
                                 <div className="font-clash font-bold text-2xl mb-8">KICKS DON&apos;T STINK</div>
                                 <nav className="flex flex-col gap-1">
-                                    {[
-                                        { href: '/', label: 'HOME' },
-                                        { href: '/products', label: 'PRODUCTS' },
-                                        { href: '/about', label: 'ABOUT US' },
-                                        ...(!user ? [
-                                            { href: '/auth/login', label: 'LOGIN' },
-                                            { href: '/auth/signup', label: 'SIGNUP' },
-                                        ] : [
-                                            { href: '/profile', label: 'MY PROFILE' },
-                                        ]),
-                                    ].map((item, i) => (
-                                        <motion.div
-                                            key={item.href}
-                                            initial={{ x: -30, opacity: 0 }}
-                                            animate={{ x: 0, opacity: 1 }}
-                                            transition={{ delay: 0.05 * i }}
-                                        >
-                                            <Link
-                                                href={item.href}
+                                    <Link
+                                        href="/"
+                                        onClick={() => setMenuOpen(false)}
+                                        className="block font-bebas text-4xl tracking-widest py-2 border-b-2 border-black/10 hover:text-mustard transition-colors"
+                                    >
+                                        HOME
+                                    </Link>
+                                    <Link
+                                        href="/products"
+                                        onClick={() => setMenuOpen(false)}
+                                        className="block font-bebas text-4xl tracking-widest py-2 border-b-2 border-black/10 hover:text-mustard transition-colors"
+                                    >
+                                        PRODUCTS
+                                    </Link>
+                                    <Link
+                                        href="/about"
+                                        onClick={() => setMenuOpen(false)}
+                                        className="block font-bebas text-4xl tracking-widest py-2 border-b-2 border-black/10 hover:text-mustard transition-colors"
+                                    >
+                                        ABOUT US
+                                    </Link>
+                                    
+                                    <Show when="signed-out">
+                                        <SignInButton mode="modal">
+                                            <button 
                                                 onClick={() => setMenuOpen(false)}
-                                                className="block font-bebas text-4xl tracking-widest py-2 border-b-2 border-black/10 hover:text-mustard transition-colors"
+                                                className="block font-bebas text-4xl tracking-widest py-2 border-b-2 border-black/10 hover:text-mustard transition-colors text-left w-full"
                                             >
-                                                {item.label}
-                                            </Link>
-                                        </motion.div>
-                                    ))}
-                                    {user && (
-                                        <motion.button
-                                            initial={{ x: -30, opacity: 0 }}
-                                            animate={{ x: 0, opacity: 1 }}
-                                            transition={{ delay: 0.3 }}
-                                            onClick={handleLogout}
-                                            className="text-left font-bebas text-4xl tracking-widest py-2 border-b-2 border-black/10 text-burgundy hover:opacity-70 transition-opacity"
+                                                LOGIN
+                                            </button>
+                                        </SignInButton>
+                                        <SignUpButton mode="modal">
+                                            <button 
+                                                onClick={() => setMenuOpen(false)}
+                                                className="block font-bebas text-4xl tracking-widest py-2 border-b-2 border-black/10 hover:text-mustard transition-colors text-left w-full"
+                                            >
+                                                SIGNUP
+                                            </button>
+                                        </SignUpButton>
+                                    </Show>
+
+                                    <Show when="signed-in">
+                                        <Link
+                                            href="/profile"
+                                            onClick={() => setMenuOpen(false)}
+                                            className="block font-bebas text-4xl tracking-widest py-2 border-b-2 border-black/10 hover:text-mustard transition-colors"
                                         >
-                                            LOGOUT
-                                        </motion.button>
-                                    )}
+                                            MY PROFILE
+                                        </Link>
+                                    </Show>
                                 </nav>
                             </div>
 

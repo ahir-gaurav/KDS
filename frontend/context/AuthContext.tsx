@@ -1,6 +1,6 @@
 'use client';
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { authAPI } from '@/lib/api';
+import { useUser, useClerk } from "@clerk/nextjs";
 
 interface User {
     id: string;
@@ -21,34 +21,37 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
+    const { user: clerkUser, isLoaded } = useUser();
+    const { signOut, openSignIn } = useClerk();
     const [user, setUser] = useState<User | null>(null);
     const [token, setToken] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        const storedToken = localStorage.getItem('token');
-        const storedUser = localStorage.getItem('user');
-        if (storedToken && storedUser) {
-            setToken(storedToken);
-            setUser(JSON.parse(storedUser));
+        if (isLoaded) {
+            if (clerkUser) {
+                setUser({
+                    id: clerkUser.id,
+                    name: clerkUser.fullName || clerkUser.username || '',
+                    email: clerkUser.primaryEmailAddress?.emailAddress || '',
+                });
+                // In Keyless Mode/Clerk setup, the token is handled by the browser
+                // If the backend needs a JWT, it should be retrieved via clerkUser.getToken()
+                setToken(null); 
+            } else {
+                setUser(null);
+                setToken(null);
+            }
+            setLoading(false);
         }
-        setLoading(false);
-    }, []);
+    }, [clerkUser, isLoaded]);
 
     const login = async (email: string, password: string) => {
-        const { data } = await authAPI.login({ email, password });
-        setUser(data.user);
-        setToken(data.token);
-        localStorage.setItem('token', data.token);
-        localStorage.setItem('user', JSON.stringify(data.user));
+        openSignIn();
     };
 
     const logout = async () => {
-        await authAPI.logout().catch(() => { });
-        setUser(null);
-        setToken(null);
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
+        await signOut();
     };
 
     return (

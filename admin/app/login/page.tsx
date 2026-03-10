@@ -9,7 +9,6 @@ import Link from 'next/link';
 export default function AdminLoginPage() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
-    const [secretCode, setSecretCode] = useState('');
     const [loading, setLoading] = useState(false);
     const router = useRouter();
     const { login } = useAdminAuth();
@@ -18,7 +17,7 @@ export default function AdminLoginPage() {
         e.preventDefault();
         setLoading(true);
         try {
-            const { data } = await adminAPI.login({ email, password, secretCode });
+            const { data } = await adminAPI.login({ email, password });
             login(data.token);
             toast.success('Admin Login Successful');
             router.push('/');
@@ -63,17 +62,7 @@ export default function AdminLoginPage() {
                             placeholder="••••••••"
                         />
                     </div>
-                    <div>
-                        <label className="text-[10px] font-bold uppercase tracking-[0.2em] text-black/50 mb-2 block">Secret Code</label>
-                        <input
-                            type="password"
-                            required
-                            value={secretCode}
-                            onChange={(e) => setSecretCode(e.target.value)}
-                            className="w-full bg-transparent border-2 border-black p-3 outline-none focus:bg-mustard/10 transition-colors font-medium"
-                            placeholder="6-digit-secret"
-                        />
-                    </div>
+
 
                     <button
                         type="submit"

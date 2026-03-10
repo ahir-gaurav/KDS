@@ -8,9 +8,8 @@ export default function SidebarWrapper({ children }: { children: React.ReactNode
     const pathname = usePathname();
     const { isAdmin } = useAdminAuth();
 
-    const isLoginPage = pathname === '/login';
-
-    if (isLoginPage) return <>{children}</>;
+    const isAuthPage = pathname === '/login' || pathname === '/register';
+    if (isAuthPage) return <>{children}</>;
 
     return (
         <div className="flex">
