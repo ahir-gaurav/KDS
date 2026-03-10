@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ShoppingCart, User, Menu, X } from 'lucide-react';
-import { Show, SignInButton, SignUpButton, UserButton } from "@clerk/nextjs";
+import { SignedIn, SignedOut, SignInButton, SignUpButton, UserButton } from "@clerk/nextjs";
 import { useAuth } from '@/context/AuthContext';
 import { useCart } from '@/context/CartContext';
 
@@ -41,7 +41,7 @@ export default function Header() {
 
                     {/* Right: Profile + Cart */}
                     <div className="flex items-center gap-4">
-                        <Show when="signed-in">
+                        <SignedIn>
                             <UserButton 
                                 appearance={{
                                     elements: {
@@ -50,14 +50,14 @@ export default function Header() {
                                     }
                                 }}
                             />
-                        </Show>
-                        <Show when="signed-out">
+                        </SignedIn>
+                        <SignedOut>
                             <SignInButton mode="modal">
                                 <button aria-label="Profile">
                                     <User size={24} strokeWidth={2} className="hover:text-mustard transition-colors" />
                                 </button>
                             </SignInButton>
-                        </Show>
+                        </SignedOut>
                         <Link href="/cart" className="relative" aria-label="Cart">
                             <ShoppingCart size={24} strokeWidth={2} className="hover:text-mustard transition-colors" />
                             {totalItems > 0 && (
@@ -125,7 +125,7 @@ export default function Header() {
                                         ABOUT US
                                     </Link>
                                     
-                                    <Show when="signed-out">
+                                    <SignedOut>
                                         <SignInButton mode="modal">
                                             <button 
                                                 onClick={() => setMenuOpen(false)}
@@ -142,9 +142,9 @@ export default function Header() {
                                                 SIGNUP
                                             </button>
                                         </SignUpButton>
-                                    </Show>
+                                    </SignedOut>
 
-                                    <Show when="signed-in">
+                                    <SignedIn>
                                         <Link
                                             href="/profile"
                                             onClick={() => setMenuOpen(false)}
@@ -152,7 +152,7 @@ export default function Header() {
                                         >
                                             MY PROFILE
                                         </Link>
-                                    </Show>
+                                    </SignedIn>
                                 </nav>
                             </div>
 
