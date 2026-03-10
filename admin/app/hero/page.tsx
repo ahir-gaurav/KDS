@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import {
     Plus,
     Trash2,
+    ChevronRight,
     Image as ImageIcon,
     Upload,
     Link as LinkIcon,
