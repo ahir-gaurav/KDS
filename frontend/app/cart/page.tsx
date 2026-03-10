@@ -7,11 +7,11 @@ import { Trash2, Plus, Minus } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
 import { publicAPI, couponAPI } from '@/lib/api';
 import toast from 'react-hot-toast';
-import { useAuth } from '@/context/AuthContext';
+import { useUser } from "@clerk/nextjs";
 
 export default function CartPage() {
     const { items, removeItem, updateQuantity, subtotal } = useCart();
-    const { user } = useAuth();
+    const { user, isLoaded } = useUser();
     const [settings, setSettings] = useState<any>({ gst: 18, deliveryCharge: 80, freeDeliveryThreshold: 2000 });
     const [couponCode, setCouponCode] = useState('');
     const [couponData, setCouponData] = useState<any>(null);
@@ -24,7 +24,7 @@ export default function CartPage() {
     }, []);
 
     const handleApplyCoupon = async () => {
-        if (!user) return toast.error('Please login to apply coupons');
+        if (!isLoaded || !user) return toast.error('Please login to apply coupons');
         if (!couponCode.trim()) return;
         setApplyingCoupon(true);
         try {

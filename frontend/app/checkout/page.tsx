@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MapPin, CreditCard, Check } from 'lucide-react';
-import { useAuth } from '@/context/AuthContext';
+import { useUser } from "@clerk/nextjs";
 import { useCart } from '@/context/CartContext';
 import { orderAPI, userAPI, publicAPI } from '@/lib/api';
 import toast from 'react-hot-toast';
@@ -16,7 +16,7 @@ function CheckoutContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const couponCode = searchParams.get('coupon') || '';
-    const { user } = useAuth();
+    const { user, isLoaded } = useUser();
     const { items, subtotal, clearCart } = useCart();
     const [step, setStep] = useState(0);
     const [settings, setSettings] = useState<any>({ gst: 18, deliveryCharge: 80, freeDeliveryThreshold: 2000 });
@@ -28,14 +28,16 @@ function CheckoutContent() {
     const [placing, setPlacing] = useState(false);
 
     useEffect(() => {
-        if (!user) { router.push('/auth/login?redirect=/checkout'); return; }
-        userAPI.getProfile().then(({ data }) => {
-            setAddresses(data.user?.addresses || []);
-            const def = data.user?.addresses?.find((a: any) => a.isDefault) || data.user?.addresses?.[0];
-            if (def) setSelectedAddress(def);
-        });
+        if (isLoaded && !user) { router.push('/'); return; }
+        if (isLoaded && user) {
+            userAPI.getProfile().then(({ data }) => {
+                setAddresses(data.user?.addresses || []);
+                const def = data.user?.addresses?.find((a: any) => a.isDefault) || data.user?.addresses?.[0];
+                if (def) setSelectedAddress(def);
+            });
+        }
         publicAPI.getSettings().then(({ data }) => { if (data.settings) setSettings(data.settings); });
-    }, [user, router]);
+    }, [isLoaded, user, router]);
 
     if (items.length === 0) { router.push('/cart'); return null; }
 
@@ -78,7 +80,7 @@ function CheckoutContent() {
                             await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/payment/verify`, {
                                 method: 'POST',
                                 credentials: 'include',
-                                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('token')}` },
+                                headers: { 'Content-Type': 'application/json' },
                                 body: JSON.stringify({
                                     razorpay_order_id: response.razorpay_order_id,
                                     razorpay_payment_id: response.razorpay_payment_id,
@@ -92,7 +94,7 @@ function CheckoutContent() {
                             toast.error('Payment verification failed. Contact support.');
                         }
                     },
-                    prefill: { name: user?.name, email: user?.email },
+                    prefill: { name: user?.fullName || '', email: user?.primaryEmailAddress?.emailAddress || '' },
                     theme: { color: '#D9A441' },
                 });
                 rzp.open();

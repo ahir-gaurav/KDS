@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { User, MapPin, Package, Plus, Trash2, Edit2, Check } from 'lucide-react';
-import { useAuth } from '@/context/AuthContext';
+import { useUser, useClerk } from "@clerk/nextjs";
 import { userAPI, orderAPI } from '@/lib/api';
 import toast from 'react-hot-toast';
 
@@ -16,7 +16,8 @@ const STATUS_COLORS: Record<string, string> = {
 
 export default function ProfilePage() {
     const router = useRouter();
-    const { user, logout } = useAuth();
+    const { user, isLoaded } = useUser();
+    const { signOut } = useClerk();
     const [tab, setTab] = useState<'profile' | 'orders' | 'addresses'>('profile');
     const [orders, setOrders] = useState<any[]>([]);
     const [addresses, setAddresses] = useState<any[]>([]);
@@ -27,19 +28,21 @@ export default function ProfilePage() {
     const [newAddr, setNewAddr] = useState({ fullName: '', phone: '', addressLine1: '', addressLine2: '', city: '', state: '', pincode: '' });
 
     useEffect(() => {
-        if (!user) { router.push('/auth/login'); return; }
-        const fetchData = async () => {
-            try {
-                const [profileRes, ordersRes] = await Promise.all([userAPI.getProfile(), orderAPI.getMyOrders()]);
-                const u = profileRes.data.user;
-                setProfileData({ name: u.name || '', phone: u.phone || '' });
-                setAddresses(u.addresses || []);
-                setOrders(ordersRes.data.orders || []);
-            } catch { }
-            setLoading(false);
-        };
-        fetchData();
-    }, [user, router]);
+        if (isLoaded && !user) { router.push('/'); return; }
+        if (isLoaded && user) {
+            const fetchData = async () => {
+                try {
+                    const [profileRes, ordersRes] = await Promise.all([userAPI.getProfile(), orderAPI.getMyOrders()]);
+                    const u = profileRes.data.user;
+                    setProfileData({ name: u.name || '', phone: u.phone || '' });
+                    setAddresses(u.addresses || []);
+                    setOrders(ordersRes.data.orders || []);
+                } catch { }
+                setLoading(false);
+            };
+            fetchData();
+        }
+    }, [isLoaded, user, router]);
 
     const handleSaveProfile = async () => {
         setSaving(true);
@@ -87,9 +90,9 @@ export default function ProfilePage() {
                 <div className="max-w-[1200px] mx-auto flex items-center justify-between flex-wrap gap-4">
                     <div>
                         <h1 className="font-bebas text-5xl md:text-7xl text-cream">MY ACCOUNT<span className="text-mustard">.</span></h1>
-                        <p className="font-inter text-cream/50 text-sm mt-1">{user?.email}</p>
+                        <p className="font-inter text-cream/50 text-sm mt-1">{user?.primaryEmailAddress?.emailAddress}</p>
                     </div>
-                    <button onClick={async () => { await logout(); router.push('/'); }} className="btn-brutalist font-bebas text-lg tracking-widest px-6 py-2 border-2 border-burgundy text-burgundy hover:bg-burgundy hover:text-cream transition-colors">
+                    <button onClick={async () => { await signOut(); router.push('/'); }} className="btn-brutalist font-bebas text-lg tracking-widest px-6 py-2 border-2 border-burgundy text-burgundy hover:bg-burgundy hover:text-cream transition-colors">
                         LOGOUT
                     </button>
                 </div>
@@ -129,7 +132,7 @@ export default function ProfilePage() {
                         ))}
                         <div>
                             <label className="font-inter text-xs uppercase tracking-widest text-black/50 mb-1 block">Email</label>
-                            <input value={user?.email} disabled className="w-full border-2 border-black/20 px-4 py-3 font-inter bg-cream/50 text-black/40" />
+                             <input value={user?.primaryEmailAddress?.emailAddress} disabled className="w-full border-2 border-black/20 px-4 py-3 font-inter bg-cream/50 text-black/40" />
                         </div>
                         <button onClick={handleSaveProfile} disabled={saving} className="btn-brutalist bg-black text-cream font-bebas text-xl tracking-widest px-8 py-3">
                             {saving ? 'SAVING...' : 'SAVE CHANGES →'}

@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ShoppingCart, User, Menu, X } from 'lucide-react';
 import { SignedIn, SignedOut, SignInButton, SignUpButton, UserButton } from "@clerk/nextjs";
-import { useAuth } from '@/context/AuthContext';
 import { useCart } from '@/context/CartContext';
 
 export default function Header() {

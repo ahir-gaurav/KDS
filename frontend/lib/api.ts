@@ -8,12 +8,8 @@ const api = axios.create({
     headers: { 'Content-Type': 'application/json' },
 });
 
-// Request interceptor – attach token from localStorage if present
+// Request interceptor
 api.interceptors.request.use((config) => {
-    if (typeof window !== 'undefined') {
-        const token = localStorage.getItem('token');
-        if (token) config.headers.Authorization = `Bearer ${token}`;
-    }
     return config;
 });
 
@@ -21,24 +17,9 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
     (response) => response,
     (error) => {
-        if (error.response?.status === 401 && typeof window !== 'undefined') {
-            localStorage.removeItem('token');
-            localStorage.removeItem('user');
-        }
         return Promise.reject(error);
     }
 );
-
-// Auth
-export const authAPI = {
-    signup: (data: any) => api.post('/api/auth/signup', data),
-    verifyOTP: (data: any) => api.post('/api/auth/verify-otp', data),
-    login: (data: any) => api.post('/api/auth/login', data),
-    logout: () => api.post('/api/auth/logout'),
-    getMe: () => api.get('/api/auth/me'),
-    forgotPassword: (data: any) => api.post('/api/auth/forgot-password', data),
-    resetPassword: (data: any) => api.post('/api/auth/reset-password', data),
-};
 
 // Products
 export const productAPI = {
