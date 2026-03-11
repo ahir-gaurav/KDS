@@ -37,7 +37,7 @@ export default function AdminTicker() {
         if (!newMessage) return;
         setAdding(true);
         try {
-            await adminAPI.addTicker({ message: newMessage });
+            await adminAPI.addTicker({ text: newMessage });
             toast.success('Message Added');
             setNewMessage('');
             fetchTicker();
