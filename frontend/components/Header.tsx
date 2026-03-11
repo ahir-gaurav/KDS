@@ -3,14 +3,26 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ShoppingCart, User, Menu, X } from 'lucide-react';
+import { ShoppingCart, User, Menu, X, Search } from 'lucide-react';
 import { SignedIn, SignedOut, SignInButton, SignUpButton, UserButton } from "@clerk/nextjs";
 import { useCart } from '@/context/CartContext';
 
 export default function Header() {
     const [menuOpen, setMenuOpen] = useState(false);
+    const [searchOpen, setSearchOpen] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
     const { totalItems } = useCart();
     const router = useRouter();
+
+    const handleSearch = (e: React.FormEvent) => {
+        e.preventDefault();
+        const q = searchQuery.trim();
+        if (!q) return;
+        setSearchOpen(false);
+        setSearchQuery('');
+        setMenuOpen(false);
+        router.push(`/products?search=${encodeURIComponent(q)}`);
+    };
 
     return (
         <>
@@ -38,10 +50,19 @@ export default function Header() {
                         </span>
                     </Link>
 
-                    {/* Right: Profile + Cart */}
+                    {/* Right: Search + Profile + Cart */}
                     <div className="flex items-center gap-4">
+                        {/* Search toggle */}
+                        <button
+                            onClick={() => setSearchOpen(!searchOpen)}
+                            className="p-1 hover:opacity-70 transition-opacity"
+                            aria-label="Search"
+                        >
+                            <Search size={22} strokeWidth={2} className="hover:text-mustard transition-colors" />
+                        </button>
+
                         <SignedIn>
-                            <UserButton 
+                            <UserButton
                                 appearance={{
                                     elements: {
                                         userButtonAvatarBox: "w-6 h-6 hover:opacity-80 transition-opacity",
@@ -72,6 +93,46 @@ export default function Header() {
                         </Link>
                     </div>
                 </div>
+
+                {/* Search Bar Dropdown */}
+                <AnimatePresence>
+                    {searchOpen && (
+                        <motion.div
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: 'auto', opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                            transition={{ duration: 0.2 }}
+                            className="overflow-hidden border-t-2 border-black bg-cream"
+                        >
+                            <form onSubmit={handleSearch} className="max-w-[1600px] mx-auto px-4 py-3 flex items-center gap-3">
+                                <Search size={18} className="text-black/40 flex-shrink-0" />
+                                <input
+                                    autoFocus
+                                    type="text"
+                                    value={searchQuery}
+                                    onChange={e => setSearchQuery(e.target.value)}
+                                    placeholder="Search products..."
+                                    className="flex-1 bg-transparent font-inter text-base focus:outline-none placeholder:text-black/30"
+                                />
+                                {searchQuery && (
+                                    <button
+                                        type="button"
+                                        onClick={() => setSearchQuery('')}
+                                        className="text-black/40 hover:text-black transition-colors"
+                                    >
+                                        <X size={16} />
+                                    </button>
+                                )}
+                                <button
+                                    type="submit"
+                                    className="btn-brutalist bg-black text-cream font-bebas tracking-widest px-4 py-1.5 text-sm"
+                                >
+                                    SEARCH
+                                </button>
+                            </form>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
             </header>
 
             {/* Hamburger Menu Overlay */}
@@ -100,7 +161,23 @@ export default function Header() {
                             </button>
 
                             <div className="mt-12">
-                                <div className="font-clash font-bold text-2xl mb-8">KICKS DON&apos;T STINK</div>
+                                <div className="font-clash font-bold text-2xl mb-4">KICKS DON&apos;T STINK</div>
+
+                                {/* Search in mobile menu */}
+                                <form onSubmit={handleSearch} className="flex items-center gap-2 border-2 border-black px-3 py-2 mb-6">
+                                    <Search size={16} className="text-black/40 flex-shrink-0" />
+                                    <input
+                                        type="text"
+                                        value={searchQuery}
+                                        onChange={e => setSearchQuery(e.target.value)}
+                                        placeholder="Search products..."
+                                        className="flex-1 bg-transparent font-inter text-sm focus:outline-none placeholder:text-black/30"
+                                    />
+                                    <button type="submit" className="text-black/40 hover:text-black">
+                                        <Search size={14} />
+                                    </button>
+                                </form>
+
                                 <nav className="flex flex-col gap-1">
                                     <Link
                                         href="/"
@@ -123,10 +200,10 @@ export default function Header() {
                                     >
                                         ABOUT US
                                     </Link>
-                                    
+
                                     <SignedOut>
                                         <SignInButton mode="modal">
-                                            <button 
+                                            <button
                                                 onClick={() => setMenuOpen(false)}
                                                 className="block font-bebas text-4xl tracking-widest py-2 border-b-2 border-black/10 hover:text-mustard transition-colors text-left w-full"
                                             >
@@ -134,7 +211,7 @@ export default function Header() {
                                             </button>
                                         </SignInButton>
                                         <SignUpButton mode="modal">
-                                            <button 
+                                            <button
                                                 onClick={() => setMenuOpen(false)}
                                                 className="block font-bebas text-4xl tracking-widest py-2 border-b-2 border-black/10 hover:text-mustard transition-colors text-left w-full"
                                             >

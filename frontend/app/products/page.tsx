@@ -2,8 +2,10 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { SlidersHorizontal, X } from 'lucide-react';
+import { useSearchParams } from 'next/navigation';
 import ProductCard from '@/components/ProductCard';
-import { productAPI } from '@/lib/api';
+import { productAPI, type Product } from '@/lib/api';
+import toast from 'react-hot-toast';
 
 const SORT_OPTIONS = [
     { label: 'Newest', value: 'newest' },
@@ -12,8 +14,11 @@ const SORT_OPTIONS = [
     { label: 'Best Selling', value: 'best_selling' },
 ];
 
-export default function ProductsPage() {
-    const [products, setProducts] = useState<any[]>([]);
+function ProductsContent() {
+    const searchParams = useSearchParams();
+    const searchQuery = searchParams.get('search') || '';
+
+    const [products, setProducts] = useState<Product[]>([]);
     const [categories, setCategories] = useState<string[]>([]);
     const [loading, setLoading] = useState(true);
     const [total, setTotal] = useState(0);
@@ -26,19 +31,26 @@ export default function ProductsPage() {
     const fetchProducts = useCallback(async () => {
         setLoading(true);
         try {
-            const { data } = await productAPI.getAll({ page, sort, category, limit: 12 });
+            const { data } = await productAPI.getAll({
+                page,
+                sort,
+                category,
+                limit: 12,
+                search: searchQuery || undefined,
+            });
             setProducts(data.products || []);
             setTotal(data.total || 0);
             setPages(data.pages || 1);
         } catch {
+            toast.error('Failed to load products. Please try again.');
             setProducts([]);
         } finally {
             setLoading(false);
         }
-    }, [page, sort, category]);
+    }, [page, sort, category, searchQuery]);
 
     useEffect(() => {
-        productAPI.getCategories().then(({ data }) => setCategories(data.categories || []));
+        productAPI.getCategories().then(({ data }) => setCategories(data.categories || [])).catch(() => {});
     }, []);
 
     useEffect(() => {
@@ -65,8 +77,11 @@ export default function ProductsPage() {
                         <span className="font-inter text-xs tracking-widest uppercase text-mustard">Shop All</span>
                     </div>
                     <h1 className="font-bebas text-6xl md:text-8xl leading-none">
-                        ALL KICKS
-                        <span className="text-mustard">.</span>
+                        {searchQuery ? (
+                            <>RESULTS FOR <span className="text-mustard">"{searchQuery}"</span></>
+                        ) : (
+                            <>ALL KICKS<span className="text-mustard">.</span></>
+                        )}
                     </h1>
                     <p className="font-inter text-cream/50 mt-2">{total} products</p>
                 </div>
@@ -75,7 +90,6 @@ export default function ProductsPage() {
             <div className="max-w-[1600px] mx-auto px-6 py-10">
                 {/* Filter Bar */}
                 <div className="flex items-center justify-between mb-8 flex-wrap gap-4">
-                    {/* Sort */}
                     <div className="flex items-center gap-3 flex-wrap">
                         <button
                             onClick={() => setShowFilters(!showFilters)}
@@ -95,13 +109,21 @@ export default function ProductsPage() {
                         </select>
                     </div>
 
-                    {/* Active category tag */}
-                    {category !== 'all' && (
-                        <div className="flex items-center gap-2 bg-mustard border-2 border-black px-4 py-2">
-                            <span className="font-bebas tracking-widest">{category.toUpperCase()}</span>
-                            <button onClick={() => handleCategoryChange('all')}><X size={14} /></button>
-                        </div>
-                    )}
+                    {/* Active filter tags */}
+                    <div className="flex items-center gap-2 flex-wrap">
+                        {searchQuery && (
+                            <div className="flex items-center gap-2 bg-black text-cream border-2 border-black px-4 py-2">
+                                <span className="font-bebas tracking-widest text-sm">SEARCH: {searchQuery.toUpperCase()}</span>
+                                <a href="/products"><X size={14} /></a>
+                            </div>
+                        )}
+                        {category !== 'all' && (
+                            <div className="flex items-center gap-2 bg-mustard border-2 border-black px-4 py-2">
+                                <span className="font-bebas tracking-widest">{category.toUpperCase()}</span>
+                                <button onClick={() => handleCategoryChange('all')}><X size={14} /></button>
+                            </div>
+                        )}
+                    </div>
                 </div>
 
                 {/* Category Filter Pills */}
@@ -150,6 +172,9 @@ export default function ProductsPage() {
                 ) : (
                     <div className="text-center py-32 border-2 border-black/10">
                         <p className="font-bebas text-5xl text-black/20">NO KICKS FOUND</p>
+                        <p className="font-inter text-black/40 mt-2 text-sm">
+                            {searchQuery ? `No results for "${searchQuery}"` : 'No products match the selected filters.'}
+                        </p>
                         <button onClick={() => handleCategoryChange('all')} className="mt-4 btn-brutalist bg-olive text-cream px-6 py-2 font-bebas text-xl">
                             CLEAR FILTERS
                         </button>
@@ -172,5 +197,19 @@ export default function ProductsPage() {
                 )}
             </div>
         </div>
+    );
+}
+
+export default function ProductsPage() {
+    return (
+        <React.Suspense fallback={
+            <div className="min-h-screen bg-cream flex items-center justify-center">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-10 w-full max-w-[1600px]">
+                    {[...Array(8)].map((_, i) => <div key={i} className="skeleton aspect-[3/4] border-2 border-black" />)}
+                </div>
+            </div>
+        }>
+            <ProductsContent />
+        </React.Suspense>
     );
 }

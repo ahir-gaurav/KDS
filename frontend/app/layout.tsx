@@ -5,9 +5,10 @@ import { CartProvider } from '@/context/CartContext';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { Toaster } from 'react-hot-toast';
+import ClerkTokenSync from '@/components/ClerkTokenSync';
 
 export const metadata: Metadata = {
-    title: "Kicks Don't Stink — Premium Sneakers",
+    title: "Kicks Don't Stink — Natural Shoe Deodorisers",
     description: 'Bold sneakers for bold people. Shop the latest drops from Kicks Don\'t Stink.',
     keywords: 'sneakers, kicks, shoes, streetwear, limited edition',
 };
@@ -22,6 +23,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             </head>
             <body>
                 <ClerkProvider>
+                    <ClerkTokenSync />
                     <CartProvider>
                         <Toaster
                             position="bottom-right"

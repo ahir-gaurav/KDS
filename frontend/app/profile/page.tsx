@@ -2,9 +2,9 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { User, MapPin, Package, Plus, Trash2, Edit2, Check } from 'lucide-react';
+import { User, MapPin, Package, Plus, Trash2 } from 'lucide-react';
 import { useUser, useClerk } from "@clerk/nextjs";
-import { userAPI, orderAPI } from '@/lib/api';
+import { userAPI, orderAPI, type Order, type Address } from '@/lib/api';
 import toast from 'react-hot-toast';
 
 const STATUS_COLORS: Record<string, string> = {
@@ -19,8 +19,8 @@ export default function ProfilePage() {
     const { user, isLoaded } = useUser();
     const { signOut } = useClerk();
     const [tab, setTab] = useState<'profile' | 'orders' | 'addresses'>('profile');
-    const [orders, setOrders] = useState<any[]>([]);
-    const [addresses, setAddresses] = useState<any[]>([]);
+    const [orders, setOrders] = useState<Order[]>([]);
+    const [addresses, setAddresses] = useState<Address[]>([]);
     const [profileData, setProfileData] = useState({ name: '', phone: '' });
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
@@ -37,7 +37,9 @@ export default function ProfilePage() {
                     setProfileData({ name: u.name || '', phone: u.phone || '' });
                     setAddresses(u.addresses || []);
                     setOrders(ordersRes.data.orders || []);
-                } catch { }
+                } catch {
+                    // Silently fail — user can still fill in their own profile data
+                }
                 setLoading(false);
             };
             fetchData();
@@ -79,7 +81,10 @@ export default function ProfilePage() {
 
     if (loading) return (
         <div className="min-h-screen bg-cream flex items-center justify-center">
-            <div className="font-bebas text-4xl animate-pulse">LOADING...</div>
+            <div className="grid grid-cols-1 gap-4 w-full max-w-[1200px] px-6 py-10">
+                <div className="skeleton h-40 border-2 border-black" />
+                <div className="skeleton h-32 border-2 border-black" />
+            </div>
         </div>
     );
 
@@ -193,7 +198,7 @@ export default function ProfilePage() {
                                     <p className="font-inter text-sm text-black/60">{addr.addressLine1}{addr.addressLine2 ? `, ${addr.addressLine2}` : ''}</p>
                                     <p className="font-inter text-sm text-black/60">{addr.city}, {addr.state} - {addr.pincode}</p>
                                     <p className="font-inter text-sm text-black/60">{addr.phone}</p>
-                                    <button onClick={() => handleDeleteAddress(addr._id)} className="mt-3 text-burgundy hover:opacity-70 flex items-center gap-1 font-inter text-sm">
+                                    <button onClick={() => handleDeleteAddress(addr._id!)} className="mt-3 text-burgundy hover:opacity-70 flex items-center gap-1 font-inter text-sm">
                                         <Trash2 size={14} /> Remove
                                     </button>
                                 </div>

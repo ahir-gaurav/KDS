@@ -3,16 +3,19 @@ import React, { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { orderAPI } from '@/lib/api';
+import { orderAPI, type Order } from '@/lib/api';
+import toast from 'react-hot-toast';
 
 function OrderConfirmationContent() {
     const searchParams = useSearchParams();
     const orderId = searchParams.get('id');
-    const [order, setOrder] = useState<any>(null);
+    const [order, setOrder] = useState<Order | null>(null);
 
     useEffect(() => {
         if (!orderId) return;
-        orderAPI.getOne(orderId).then(({ data }) => setOrder(data.order)).catch(() => { });
+        orderAPI.getOne(orderId)
+            .then(({ data }) => setOrder(data.order))
+            .catch(() => toast.error('Failed to load order details'));
     }, [orderId]);
 
     return (

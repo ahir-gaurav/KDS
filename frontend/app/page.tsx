@@ -4,8 +4,9 @@ import { motion, useInView, useMotionValue, useSpring, animate } from 'framer-mo
 import HeroSlider from '@/components/HeroSlider';
 import TickerBar from '@/components/TickerBar';
 import ProductCard from '@/components/ProductCard';
-import { productAPI } from '@/lib/api';
+import { productAPI, type Product } from '@/lib/api';
 import Link from 'next/link';
+import toast from 'react-hot-toast';
 
 // Animated counter
 function Counter({ from = 0, to, suffix = '' }: { from?: number; to: number; suffix?: string }) {
@@ -35,7 +36,7 @@ const stats = [
 ];
 
 export default function HomePage() {
-    const [bestSellers, setBestSellers] = useState<any[]>([]);
+    const [bestSellers, setBestSellers] = useState<Product[]>([]);
     const [loadingProducts, setLoadingProducts] = useState(true);
     const collectionRef = useRef(null);
     const collectionInView = useInView(collectionRef, { once: true });
@@ -43,7 +44,7 @@ export default function HomePage() {
     useEffect(() => {
         productAPI.getBestSellers()
             .then(({ data }) => setBestSellers(data.products || []))
-            .catch(() => { })
+            .catch(() => toast.error('Failed to load products'))
             .finally(() => setLoadingProducts(false));
     }, []);
 
