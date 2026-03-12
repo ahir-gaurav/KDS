@@ -85,7 +85,17 @@ api.interceptors.response.use(
     (response) => response,
     (error) => {
         const status = error.response?.status;
-        const message = error.response?.data?.message;
+        const message =
+            error.response?.data?.message ||
+            error.message ||
+            'Something went wrong';
+        // Always log full details so failures are visible in the browser console
+        console.error('API Error:', {
+            status,
+            message,
+            url: error.config?.url,
+            baseURL: error.config?.baseURL,
+        });
         if (status === 500) {
             toast.error('Server error. Please try again later.');
         } else if (status === 429) {
